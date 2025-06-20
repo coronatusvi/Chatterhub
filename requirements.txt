@@ -33,3 +33,6 @@ uvicorn==0.30.6
 uvloop==0.20.0
 watchfiles==0.24.0
 websockets==13.0.1
+sqlalchemy==2.0.30
+passlib[bcrypt]==1.7.4
+bcrypt>=4.0.0

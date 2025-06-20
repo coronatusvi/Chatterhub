@@ -1,0 +1,29 @@
+-- users: lưu thông tin tài khoản
+CREATE TABLE users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT    UNIQUE NOT NULL,
+    email         TEXT    UNIQUE NOT NULL,
+    password_hash TEXT    NOT NULL,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- sessions: lưu phiên đăng nhập (hết hạn sau 10 ngày mặc định)
+CREATE TABLE sessions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL,
+    session_token TEXT    UNIQUE NOT NULL,
+    expires_at    DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- messages: lưu lịch sử chat (mã hoá tuỳ ý ở tầng ứng dụng)
+CREATE TABLE messages (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL,
+    content       TEXT,
+    content_type  TEXT  DEFAULT 'text',     -- text | location | emoji
+    latitude      REAL,                     -- dùng cho location
+    longitude     REAL,                     -- dùng cho location
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

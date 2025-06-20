@@ -1,100 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastAPI Websocket Demo</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Chatterhub</title>
+  <!-- <link rel="stylesheet" href="/templates/index.css"/> -->
 </head>
-
 <body>
-    <h1>FastAPI Websocket Demo</h1>
-    <p>Client: <b><span id="client-id"></span></b></p>
-    <form>
-        <label for="message">Message</label>
-        <p>
-            <input type="text" name="message" id="message" required>
-            <button type="submit">Send</button>
-        </p>
+  <div class="container">
+    <header>
+      <h2>Chatterhub – Group Chat</h2>
+      <span id="client-id"></span>
+    </header>
+
+    <div id="messages" class="messages"></div>
+
+    <form id="send-form">
+      <input type="text" id="message" placeholder="Type message…" autocomplete="off" required/>
+      <button type="submit">Send</button>
+      <button type="button" id="emoji-btn">😊</button>
+      <button type="button" id="loc-btn">📍</button>
+      <button type="button" id="img-btn">📷</button>
     </form>
+  </div>
 
-    <div id="messages"></div>
+  <!-- <script src="/static/emoji-picker.js"></script> nếu bạn muốn -->
+  <script>
+    const ws = new WebSocket(`${location.protocol==="https:"?"wss":"ws"}://${location.host}/ws`);
+    const messagesDiv = document.getElementById('messages');
+    const clientIdSpan = document.getElementById('client-id');
+    const form = document.getElementById('send-form');
+    const emojiBtn = document.getElementById('emoji-btn');
+    const locBtn   = document.getElementById('loc-btn');
+    const imgBtn   = document.getElementById('img-btn');
 
-    <script>
-        const ws = new WebSocket("ws://localhost:8000/ws")
-        const form = document.querySelector('form')
-        const messagesDiv = document.getElementById('messages')
-        const clientIdSpan = document.getElementById('client-id')
+    // simple random client id
+    const clientId = Math.random().toString(36).slice(2,8);
+    clientIdSpan.textContent = `You: ${clientId}`;
 
+    ws.onopen = () => {
+      ws.send(JSON.stringify({client: clientId, content:`${clientId} joined`, type:"text"}));
+    };
 
-        // create a unique idsentifier for each client
-        const makeid = (length) => {
-            let result = '';
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            const charactersLength = characters.length;
-            let counter = 0;
-            while (counter < length) {
-                result += characters.charAt(Math.floor(Math.random() * charactersLength));
-                counter += 1;
-            }
-            return result;
-        }
+    ws.onmessage = e => {
+      const d = JSON.parse(e.data);
+      const p = document.createElement('p');
+      if (d.type==="location"){
+        p.innerHTML = `<b>${d.user}</b> shared location: <a target="_blank" href="https://maps.google.com/?q=${d.lat},${d.lon}">view</a>`;
+      } else if (d.type==="emoji") {
+        p.innerHTML = `<b>${d.user}</b>: ${d.content}`;
+      } else {
+        p.innerHTML = `<b>${d.user}</b>: ${d.content}`;
+      }
+      messagesDiv.prepend(p);
+    };
 
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      const msg = document.getElementById('message').value;
+      ws.send(JSON.stringify({client:clientId,content:msg,type:"text"}));
+      form.reset();
+    });
 
-        const clientIdentifier = makeid(6);
+    emojiBtn.onclick = ()=> {
+      ws.send(JSON.stringify({client:clientId,content:"😊",type:"emoji"}));
+    };
 
-        clientIdSpan.innerText = clientIdentifier
+    locBtn.onclick = ()=> {
+      navigator.geolocation.getCurrentPosition(pos=>{
+        ws.send(JSON.stringify({
+          client:clientId,
+          type:"location",
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude
+        }));
+      });
+    };
 
-        ws.onopen = () => {
-            // client is already
-            console.log('Connected to WebSocket Server')
-            ws.send(JSON.stringify({
-                content: `${clientIdentifier} joined`,
-                client: clientIdentifier,
-                timestamp: new Date().getTime()
-            }))
-        }
-
-        ws.onmessage = (event) => {
-            // sending a message
-            const data = JSON.parse(event.data)
-
-            const newMessage = document.createElement('p')
-
-            newMessage.innerText = `${data.client} says ${data.message}`
-
-            messagesDiv.appendChild(newMessage)
-
-            const hr = document.createElement('hr')
-
-            messagesDiv.appendChild(hr)
-        }
-
-        ws.onerror = (error) => {
-            console.error('WebSocket Error:', error)
-        }
-
-        ws.onclose = () => {
-            console.log('WebSocket connection closed')
-        }
-
-
-        form.addEventListener('submit', async (event) => {
-            //submittine event
-            const formData = new FormData(form);
-
-            const message = formData.get('message');
-
-            ws.send(JSON.stringify({
-                content: message,
-                client: clientIdentifier,
-                timestamp: new Date().getTime()
-            }))
-
-            form.reset();
-            event.preventDefault()
-        })
-    </script>
+    imgBtn.onclick = ()=> alert("Image upload is under development 🚧");
+  </script>
 </body>
-
 </html>
