@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from dataclasses import dataclass
@@ -8,7 +8,7 @@ import json
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from db.database import SessionLocal
-from db.models import Message
+from db.models import Message, User
 from sqlalchemy.orm import Session
 
 templates = Jinja2Templates(directory="templates")
@@ -64,9 +64,61 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 connection_manager = ConnectionManager()
 
+# @app.get("/", response_class=HTMLResponse)
+# def get_room(request: Request):
+#   return templates.TemplateResponse("index.html", {"request": request})
+
+def get_db():
+    print("Opening DB connection")
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        print("Closing DB connection")
+        db.close()
+
 @app.get("/", response_class=HTMLResponse)
-def get_room(request: Request):
-  return templates.TemplateResponse("index.html", {"request": request});
+def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/", response_class=HTMLResponse)
+def login_or_register(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    email: str = Form(None),
+    action: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if action == "register":
+        # Kiểm tra username/email đã tồn tại chưa
+        if db.query(User).filter((User.username == username) | (User.email == email)).first():
+            return templates.TemplateResponse("login.html", {
+                "request": request,
+                "error": "Username hoặc email đã tồn tại!",
+                "mode": "register"
+            })
+        # Tạo user mới
+        user = User(username=username, password=password, email=email, token="")
+        db.add(user)
+        db.commit()
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "Đăng ký thành công, hãy đăng nhập!",
+            "mode": "login"
+        })
+    else:  # action == "login"
+        user = db.query(User).filter(User.username == username, User.password == password).first()
+        if user:
+            response = RedirectResponse(url="/join", status_code=302)
+            response.set_cookie(key="username", value=user.username)
+            return response
+        else:
+            return templates.TemplateResponse("login.html", {
+                "request": request,
+                "error": "Sai tài khoản hoặc mật khẩu",
+                "mode": "login"
+            })
 
 @app.websocket("/message")
 async def websocket_endpoint(websocket: WebSocket):
@@ -93,7 +145,16 @@ async def websocket_endpoint(websocket: WebSocket):
         db.close()
         return RedirectResponse("/")
 
+@app.post("/logout")
+def logout():
+    response = RedirectResponse(url="/", status_code=302)
+    response.delete_cookie("username")
+    return response
+
 @app.get("/join", response_class=HTMLResponse)
 def get_room(request: Request):
-  return templates.TemplateResponse("room.html", {"request": request});
+    username = request.cookies.get("username")
+    if not username:
+        return RedirectResponse("/")
+    return templates.TemplateResponse("index.html", {"request": request, "username": username})
 

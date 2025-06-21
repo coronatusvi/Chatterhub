@@ -27,7 +27,7 @@ li {
 }
 
 .user-message {
-  background-color: #17a2b8;
+  background-color: #007bff;
   color: #fff;
   border-radius: 0.5em;
   padding: 5px 10px;
@@ -36,7 +36,7 @@ li {
 }
 
 .other-message {
-  background-color: #007bff;
+  background-color: #ff9100;
   color: #fff;
   border-radius: 0.5em;
   padding: 5px 10px;
