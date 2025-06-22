@@ -9,12 +9,15 @@
 
 <body>
     <div class="login-container">
-        <h1>Chatterhub!! Welcome to Real-time Chat API Platform</h1>
+        <h1>Chatterhub!!! </h1>
+        <p><i style="font-family:Papyrus, fantasy">Connecting every conversation, seamlessly and
+                instantly.</i> </p>
 
         <form method="post">
             <input name="username" placeholder="Username" required>
             <input name="password" type="password" placeholder="Password" required>
-            <div id="register-fields" style="display:{{ 'block' if mode == 'register' else 'none' }};">
+            <div id="register-fields" {% if mode=='register' %}style="display:block;" {% else %}style="display:none;" {%
+                endif %}>
                 <input name="email" type="email" placeholder="Email">
             </div>
             <input type="hidden" id="mode" name="mode" value="{{ mode|default('login') }}">
@@ -84,6 +87,22 @@
         });
     </script>
     {% endif %}
+    <script>
+        // Nếu vừa logout thì không cho back lại trang chat
+        if (window.performance && window.performance.navigation.type === 2) {
+            // Nếu là back/forward
+            window.location.href = "/";
+        }
+    </script>
+    <script>
+        // Nếu không có cookie username, chặn back về chat/join
+        if (!document.cookie.includes('username')) {
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.location.href = "/";
+            };
+        }
+    </script>
     <!-- ...script như cũ... -->
 
     <!-- Include Bootstrap and jQuery JavaScript -->

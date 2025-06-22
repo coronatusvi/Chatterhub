@@ -1,6 +1,10 @@
 /* Custom CSS for styling */
 body {
-  background-color: #f4f4f4;
+  background: linear-gradient(135deg, #6600ec 0%, #0a0027 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .container {

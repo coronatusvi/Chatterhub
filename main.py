@@ -79,7 +79,9 @@ def get_db():
 
 @app.get("/", response_class=HTMLResponse)
 def login_form(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    response = templates.TemplateResponse("login.html", {"request": request})
+    response.delete_cookie("username")
+    return response
 
 @app.post("/", response_class=HTMLResponse)
 def login_or_register(
@@ -152,9 +154,24 @@ def logout():
     return response
 
 @app.get("/join", response_class=HTMLResponse)
-def get_room(request: Request):
+def join_form(request: Request):
+    username = request.cookies.get("username")
+    response = templates.TemplateResponse("index.html", {"request": request, "username": username})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+@app.post("/join", response_class=HTMLResponse)
+def join_submit(request: Request, username: str = Form(...)):
+    response = RedirectResponse(url="/chat", status_code=302)
+    response.set_cookie(key="username", value=username)
+    return response
+
+@app.get("/chat", response_class=HTMLResponse)
+def chat_room(request: Request):
     username = request.cookies.get("username")
     if not username:
-        return RedirectResponse("/")
-    return templates.TemplateResponse("index.html", {"request": request, "username": username})
+        return RedirectResponse("/join")
+    response = templates.TemplateResponse("index.html", {"request": request, "username": username})
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
