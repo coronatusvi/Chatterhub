@@ -23,6 +23,11 @@ Whether you're building a chat-enabled application, an internal team tool, or a 
 
 ## How to run the app
 
+```bash
+    git clone https://github.com/coronatusvi/Chatterhub.git
+    cd Chatterhub
+```
+
 ### Run the app locally
 
 You can install the requirements locally using the following command
@@ -37,6 +42,8 @@ You can install the requirements locally using the following command
     sudo apt-get update
     sudo apt-get install -y libsqlite3-dev
 ```
+
+If you can install [https://anaconda.org/anaconda/conda](conda)
 
 or building with venv
 
@@ -62,4 +69,4 @@ You can run the app using Docker with the following commands:
                 docker run -p 8000:8000 chatterhub
 ```
 
-After running, access the app at [http://localhost:8000](http://localhost:8000)
+After running, access the app at [http://localhost:8000](http://127.0.0.1:8000)
