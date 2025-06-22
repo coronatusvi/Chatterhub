@@ -2,7 +2,7 @@ let $ = jQuery;
 let socket;
 
 function initializeWebSocket() {
-  const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+  const ws_scheme = window.location.protocol === "https:" ? "wss" : "http:";
   const ws_host = window.location.host;
   socket = new WebSocket(`${ws_scheme}://${ws_host}/message`);
 
