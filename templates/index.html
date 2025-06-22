@@ -20,8 +20,11 @@
       </form>
     </div>
     <i>
-      <p class="text-center text-muted mb-4">
-        Chatterhub: Connecting every conversation, seamlessly and instantly.
+      <p class="text-center font-weight-bold text-primary mb-0">
+        Welcome {{ username }} to Chatterhub!
+      </p>
+      <p class="text-center text-muted mb-0">
+        Connecting every conversation, seamlessly and instantly.
       </p>
     </i>
 
@@ -76,7 +79,7 @@
     document.getElementById('send').onclick = function () {
       const username = "{{ username }}";
       console.log("Username:", username);
-      
+
       if (!username || username === "None") {
         alert("Bạn chưa đăng nhập!");
         window.location.href = "/";
