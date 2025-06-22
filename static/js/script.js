@@ -14,15 +14,16 @@ function initializeWebSocket() {
     // So sánh username nhận được với username hiện tại
     const isMe = data.username === username;
     const sender = isMe ? '' : data.username + ':\n';
-    const message = data.message || data.data; // phòng trường hợp server gửi khác key
+    const message = data.message || data.data;
 
     const msgClass = isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
     const messageElement = $('<li>').addClass('clearfix');
     messageElement.append($('<div>').addClass(msgClass).text(sender + message));
     $('#messages').append(messageElement);
-    const chat = document.getElementById('chat');
-    chat.scrollTop = chat.scrollHeight;
-    $('#chat').scrollTop($('#chat')[ 0 ].scrollHeight);
+    setTimeout(() => {
+      scrollMessagesToBottom();
+    }, 50);
+    document.getElementById('messages').appendChild(messageElement);
   };
 
   socket.onerror = function (event) {
@@ -80,7 +81,4 @@ function sendMessage() {
     $('#message').val('');
   }
 }
-$('#messages').append(messageElement);
-const chat = document.getElementById('chat');
-chat.scrollTop = chat.scrollHeight;
 

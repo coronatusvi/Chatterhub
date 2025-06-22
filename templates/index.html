@@ -15,7 +15,7 @@
         <button type="submit" class="btn btn-secondary">Back</button>
       </form>
       <h1 class="text-center mb-0">Chatterhub</h1>
-      <form method="post" action="/logout">
+      <form method="get" action="/logout">
         <button type="submit" class="btn btn-outline-danger">Logout</button>
       </form>
     </div>
@@ -50,6 +50,13 @@
     });
     const username = "{{ username }}";
 
+    function scrollMessagesToBottom() {
+      const messages = document.getElementById('messages');
+      if (messages.lastElementChild) {
+        messages.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
     document.getElementById('join').onclick = function () {
       if (!username || username === "None") {
         alert("Bạn chưa đăng nhập!");
@@ -60,13 +67,21 @@
       document.getElementById('message-input').style.display = 'flex';
       // Cuộn xuống cuối khung chat
       setTimeout(function () {
+        scrollMessagesToBottom();
         const chat = document.getElementById('chat');
         chat.scrollTop = chat.scrollHeight;
-      }, 100);
+      }, 50);
     };
 
     document.getElementById('send').onclick = function () {
       const username = "{{ username }}";
+      console.log("Username:", username);
+      
+      if (!username || username === "None") {
+        alert("Bạn chưa đăng nhập!");
+        window.location.href = "/";
+        return;
+      }
       const message = document.getElementById('message').value;
       if (message.trim() !== "" && username && username !== "Incognito") {
         socket.send(JSON.stringify({
@@ -76,9 +91,10 @@
         document.getElementById('message').value = "";
         // Cuộn xuống cuối khung chat
         setTimeout(function () {
+          scrollMessagesToBottom();
           const chat = document.getElementById('chat');
           chat.scrollTop = chat.scrollHeight;
-        }, 1);
+        }, 50);
       }
     };
 

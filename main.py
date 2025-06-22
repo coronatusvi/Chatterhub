@@ -36,7 +36,7 @@ class ConnectionManager:
     self.active_connections[id] = websocket
 
     print(f"username", websocket.cookies.get("username"))
-    username = websocket.cookies.get("username") or "Unknown"
+    username = websocket.cookies.get("username") or "Someone has"
     now = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
     join_message = f"{username} joined at {now}"
 
@@ -185,7 +185,7 @@ async def websocket_endpoint(websocket: WebSocket):
         db.close()
         return RedirectResponse("/")
     
-@app.post("/logout")
+@app.get("/logout")
 def logout():
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie("username")
