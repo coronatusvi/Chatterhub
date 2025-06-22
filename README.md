@@ -38,18 +38,25 @@ You can install the requirements locally using the following command
     conda activate chatterhub-py310
 
     pip install -r requirements.txt
-
-    sudo apt-get update
-    sudo apt-get install -y libsqlite3-dev
 ```
 
 If you can install [https://anaconda.org/anaconda/conda](conda)
+If your computer is on python version != 3.10, you can download 3.10 in parallel using the method below. I still recommend you to use [https://anaconda.org/anaconda/conda](conda)
 
 or building with venv
 
 ```bash
-    python3.12 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+    python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 ```
+
+You can install Database
+
+```bash
+    sudo apt-get update
+    sudo apt-get install -y libsqlite3-dev
+```
+
+SQLite is chosen for its lightweight, serverless nature, making deployment and maintenance effortless for our project. While perceived as small-scale, it efficiently handles large datasets into terabytes, with SQL syntax mirroring that of larger databases.
 
 Then finally, run the app with the following command
 
