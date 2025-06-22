@@ -61,7 +61,11 @@ SQLite is chosen for its lightweight, serverless nature, making deployment and m
 Then finally, run the app with the following command
 
 ```bash
+    # Host reload
     uvicorn main:app --reload
+
+    # Save process
+    uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
 ```
 
 ### Run the application in Docker
