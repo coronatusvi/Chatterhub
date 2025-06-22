@@ -128,6 +128,13 @@ def login_or_register(
                 "error": "Username hoặc email đã tồn tại!",
                 "mode": "register"
             })
+        # Kiểm tra độ dài mật khẩu
+        if len(password) < 8:
+            return templates.TemplateResponse("login.html", {
+                "request": request,
+                "error": "Mật khẩu phải có ít nhất 8 ký tự!",
+                "mode": "register"
+            })
         # Hash password trước khi lưu
         hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         user = User(username=username, password=hashed_pw, email=email, token="")
