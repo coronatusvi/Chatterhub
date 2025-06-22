@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import bcrypt
 from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -32,8 +35,33 @@ class ConnectionManager:
     id = str(uuid.uuid4())
     self.active_connections[id] = websocket
 
-    await self.send_message(websocket, json.dumps({"isMe": True, "data": "Have joined!!", "username": "You"}))
+    print(f"username", websocket.cookies.get("username"))
+    username = websocket.cookies.get("username") or "Unknown"
+    now = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+    join_message = f"{username} joined at {now}"
 
+    db = SessionLocal()
+    from db.models import Message
+
+    # Kiểm tra đã có thông báo join của user này chưa
+    existed = db.query(Message).filter(
+        Message.username == "Admin",
+        Message.content.like(f"{username} joined at%")
+    ).first()
+
+    if not existed:
+        msg = Message(username="Admin", content=join_message)
+        db.add(msg)
+        db.commit()
+
+        # Gửi thông báo join cho tất cả client
+        await self.broadcast(websocket, json.dumps({
+            "username": "Admin",
+            "message": join_message
+        }))
+
+    db.close()
+  
   async def send_message(self, ws: WebSocket, message: str):
     await ws.send_text(message)
 
@@ -100,8 +128,9 @@ def login_or_register(
                 "error": "Username hoặc email đã tồn tại!",
                 "mode": "register"
             })
-        # Tạo user mới
-        user = User(username=username, password=password, email=email, token="")
+        # Hash password trước khi lưu
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        user = User(username=username, password=hashed_pw, email=email, token="")
         db.add(user)
         db.commit()
         return templates.TemplateResponse("login.html", {
@@ -110,8 +139,8 @@ def login_or_register(
             "mode": "login"
         })
     else:  # action == "login"
-        user = db.query(User).filter(User.username == username, User.password == password).first()
-        if user:
+        user = db.query(User).filter(User.username == username).first()
+        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
             response = RedirectResponse(url="/join", status_code=302)
             response.set_cookie(key="username", value=user.username)
             return response
@@ -166,13 +195,15 @@ def logout():
 def join_form(request: Request):
     username = request.cookies.get("username")
     response = templates.TemplateResponse("index.html", {"request": request, "username": username})
-    response.headers["Cache-Control"] = "no-store"
+    # response.headers["Cache-Control"] = "no-store"
     return response
 
-@app.post("/join", response_class=HTMLResponse)
-def join_submit(request: Request, username: str = Form(...)):
-    response = RedirectResponse(url="/chat", status_code=302)
-    response.set_cookie(key="username", value=username)
+@app.post("/join")
+async def join(request: Request):
+    form = await request.form()
+    username = form["username"]
+    response = RedirectResponse("/chat", status_code=302)
+    response.set_cookie("username", username)
     return response
 
 @app.get("/chat", response_class=HTMLResponse)
@@ -180,7 +211,7 @@ def chat_room(request: Request):
     username = request.cookies.get("username")
     if not username:
         return RedirectResponse("/join")
-    response = templates.TemplateResponse("index.html", {"request": request, "username": username})
-    response.headers["Cache-Control"] = "no-store"
+    response = templates.TemplateResponse("chat.html", {"request": request, "username": username})
+    # response.headers["Cache-Control"] = "no-store"
     return response
 

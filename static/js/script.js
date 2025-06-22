@@ -83,3 +83,4 @@ function sendMessage() {
 $('#messages').append(messageElement);
 const chat = document.getElementById('chat');
 chat.scrollTop = chat.scrollHeight;
+
