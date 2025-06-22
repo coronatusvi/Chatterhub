@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chatterhub!! Welcome to Real-time Chat API Platform</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{url_for('static', path='/css/login.css')}}" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div class="login-container">
+        <h1>Chatterhub!!! </h1>
+        <p><i style="font-family:'Times New Roman', Times, serif">Connecting every conversation, seamlessly and
+                instantly.</i> </p>
+
+        <form method="post">
+            <input name="username" placeholder="Username" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <div id="register-fields" {% if mode=='register' %}style="display:block;" {% else %}style="display:none;" {%
+                endif %}>
+                <input name="email" type="email" placeholder="Email">
+            </div>
+            <input type="hidden" id="mode" name="mode" value="{{ mode|default('login') }}">
+            <div class="d-flex flex-column gap-2 mt-3">
+                {% if mode == 'register' %}
+                <button type="submit" name="action" value="register" class="btn btn-primary">Register</button>
+                <button type="button" class="btn btn-link" onclick="toggleRegister()">Back to Login</button>
+                {% else %}
+                <button type="submit" name="action" value="login" class="btn btn-primary">Login</button>
+                <button type="button" class="btn btn-link" onclick="toggleRegister()">Back to Register</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Thông báo</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ error }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleRegister() {
+            const registerFields = document.getElementById('register-fields');
+            const modeInput = document.getElementById('mode');
+            const isRegister = modeInput.value === 'register';
+
+            // Đổi mode
+            modeInput.value = isRegister ? 'login' : 'register';
+
+            // Đổi hiển thị trường email
+            registerFields.style.display = isRegister ? 'none' : 'block';
+
+            // Đổi nút
+            const btnPrimary = document.querySelector('button[type="submit"]');
+            const btnSwitch = document.querySelector('button[type="button"]');
+
+            if (isRegister) {
+                btnPrimary.textContent = 'Login';
+                btnPrimary.name = 'action';
+                btnPrimary.value = 'login';
+                btnSwitch.textContent = 'Register';
+            } else {
+                btnPrimary.textContent = 'Register';
+                btnPrimary.name = 'action';
+                btnPrimary.value = 'register';
+                btnSwitch.textContent = 'Back to Login';
+            }
+        }
+    </script>
+    {% if error and error.strip() %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#errorModal').modal('show');
+        });
+    </script>
+    {% endif %}
+    <script>
+        // Nếu vừa logout thì không cho back lại trang chat
+        if (window.performance && window.performance.navigation.type === 2) {
+            // Nếu là back/forward
+            window.location.href = "/";
+        }
+    </script>
+    <script>
+        // Nếu không có cookie username, chặn back về chat/join
+        if (!document.cookie.includes('username')) {
+            window.history.pushState(null, "", window.location.href);
+            window.onpopstate = function () {
+                window.location.href = "/";
+            };
+        }
+    </script>
+    <!-- ...script như cũ... -->
+
+    <!-- Include Bootstrap and jQuery JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="{{url_for('static', path='/js/script.js')}}"></script>
+</body>
+
+</html>
