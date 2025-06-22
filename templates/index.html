@@ -5,6 +5,7 @@
   <title>Chatterhub – Real-time Chat API Platform</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="{{url_for('static', path='/css/style.css')}}" type="text/css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
@@ -19,7 +20,7 @@
       </form>
     </div>
     <i>
-      <p class="text-center text-muted mb-4" style="font-size: 1rem; font-family:'Times New Roman', Times, serif">
+      <p class="text-center text-muted mb-4">
         Chatterhub: Connecting every conversation, seamlessly and instantly.
       </p>
     </i>
@@ -32,33 +33,21 @@
       <button id="join" class="btn btn-success btn-lg">Join</button>
     </div>
     <div class="input-group mb-3" id="message-input" style="display: none;">
-      <input type="text" id="message" class="form-control" placeholder="Type your message">
+      <!-- <input type="text" id="message" class="form-control" placeholder="Type your message"> -->
+      <textarea id="message" class="form-control" placeholder="Type your message"></textarea>
       <div class="input-group-append">
         <button id="send" class="btn btn-primary">Send</button>
       </div>
     </div>
   </div>
 
-  <!-- Username Modal -->
-  <!-- <div class="modal fade" id="usernameModal" tabindex="-1" role="dialog" aria-labelledby="usernameModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="usernameModalLabel">Enter Your Username
-          </h5>
-        </div>
-        <div class="modal-body">
-          <input type="text" id="usernameInput" class="form-control" placeholder="Your username">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button id="join" class="btn btn-primary" data-dismiss="modal">Join</button>
-        </div>
-      </div>
-    </div>
-  </div> -->
   <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        const chat = document.getElementById('chat');
+        chat.scrollTop = chat.scrollHeight;
+      }, 100);
+    });
     const username = "{{ username }}";
 
     document.getElementById('join').onclick = function () {
@@ -89,7 +78,7 @@
         setTimeout(function () {
           const chat = document.getElementById('chat');
           chat.scrollTop = chat.scrollHeight;
-        }, 100);
+        }, 1);
       }
     };
 
@@ -97,10 +86,16 @@
     document.getElementById('message').addEventListener('keydown', function (event) {
       if (event.key === "Enter") {
         if (event.ctrlKey || event.metaKey) {
-          // Cho phép xuống dòng khi Ctrl+Enter (hoặc Cmd+Enter trên Mac)
-          return;
+          // Cho phép xuống dòng khi Ctrl+Enter
+          const textarea = event.target;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          textarea.value = textarea.value.substring(0, start) + "\n" + textarea.value.substring(end);
+          textarea.selectionStart = textarea.selectionEnd = start + 1;
+          event.preventDefault();
         } else {
-          event.preventDefault(); // Không xuống dòng
+          // Gửi tin nhắn khi chỉ nhấn Enter
+          event.preventDefault();
           document.getElementById('send').click();
         }
       }

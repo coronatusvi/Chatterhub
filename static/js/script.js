@@ -2,7 +2,8 @@ let $ = jQuery;
 let socket;
 
 function initializeWebSocket() {
-  socket = new WebSocket('ws://localhost:8000/message');
+  let ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+  socket = new WebSocket(ws_scheme + '://' + window.location.host + '/message');
 
   socket.onopen = function (event) {
     console.log('WebSocket connection established.');
@@ -12,44 +13,17 @@ function initializeWebSocket() {
     const data = JSON.parse(event.data);
     // So sánh username nhận được với username hiện tại
     const isMe = data.username === username;
-    console.log(username);
+    const sender = isMe ? 'You' : data.username;
+    const message = data.message || data.data; // phòng trường hợp server gửi khác key
 
     const msgClass = isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
-    const sender = isMe ? 'You' : data.username;
-    const message = data.data;
-
-    if (sender === 'You' && (message === 'Welcome back!' || message === 'Have joined!!')) {
-      const sysMsg = $('<li>').addClass('clearfix text-center text-info').text(message);
-      $('#messages').append(sysMsg);
-    } else {
-      const messageElement = $('<li>').addClass('clearfix');
-      messageElement.append($('<div>').addClass(msgClass).text(sender + ': ' + message));
-      $('#messages').append(messageElement);
-    }
+    const messageElement = $('<li>').addClass('clearfix');
+    messageElement.append($('<div>').addClass(msgClass).text(sender + ': ' + message));
+    $('#messages').append(messageElement);
+    const chat = document.getElementById('chat');
+    chat.scrollTop = chat.scrollHeight;
     $('#chat').scrollTop($('#chat')[ 0 ].scrollHeight);
   };
-
-
-  socket.onmessage = function (event) {
-    const data = JSON.parse(event.data);
-    console.log('Received message:', data);
-
-    const msgClass = data.isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
-    const sender = data.isMe ? 'You' : data.username;
-    const message = data.data;
-
-    // Nếu là thông báo hệ thống (ví dụ Welcome back!)
-    if (sender === 'You' && (message === 'Welcome back!' || message === 'Have joined!!')) {
-      const sysMsg = $('<li>').addClass('clearfix text-center text-info').text(message);
-      $('#messages').append(sysMsg);
-    } else {
-      const messageElement = $('<li>').addClass('clearfix');
-      messageElement.append($('<div>').addClass(msgClass).text(sender + ': ' + message));
-      $('#messages').append(messageElement);
-    }
-    $('#chat').scrollTop($('#chat')[ 0 ].scrollHeight);
-  };
-
 
   socket.onerror = function (event) {
     console.error('WebSocket error. Please rejoin the chat.');
@@ -106,3 +80,6 @@ function sendMessage() {
     $('#message').val('');
   }
 }
+$('#messages').append(messageElement);
+const chat = document.getElementById('chat');
+chat.scrollTop = chat.scrollHeight;
