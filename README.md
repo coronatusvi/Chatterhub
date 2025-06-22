@@ -2,7 +2,7 @@
 
 ---
 
-### 🔷 **Chatterhub – Real-time Chat API Platform**
+### 🔷 **Chatterhub – Connecting every conversation, seamlessly and instantly.**
 
 **Chatterhub** is a lightweight, scalable real-time messaging system designed to support group chat and future extensibility to 1-1 conversations. Built on top of WebSocket technology and RESTful APIs, Chatterhub provides seamless bi-directional communication for both web and mobile clients.
 
@@ -33,6 +33,15 @@ You can install the requirements locally using the following command
     conda activate chatterhub-py310
 
     pip install -r requirements.txt
+
+    sudo apt-get update
+    sudo apt-get install -y libsqlite3-dev
+```
+
+or building with venv
+
+```bash
+    python3.12 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 ```
 
 Then finally, run the app with the following command
