@@ -4,7 +4,7 @@ let socket;
 function initializeWebSocket() {
   const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
   const ws_host = window.location.host;
-  const socket = new WebSocket(`${ws_scheme}://${ws_host}/message`);
+  socket = new WebSocket(`${ws_scheme}://${ws_host}/message`);
 
   socket.onopen = function (event) {
     console.log('WebSocket connection established.');
