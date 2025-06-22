@@ -10,7 +10,7 @@
 
 <body>
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mt-3 mb-2" style=" padding: 0 20px;">
+        <div class="sticky-header d-flex justify-content-between align-items-center mt-3 mb-2">
             <form method="get" action="/join" style="display:inline;">
                 <button type="submit" class="btn btn-secondary">Back</button>
             </form>
@@ -20,7 +20,7 @@
             </form>
         </div>
         <i>
-            <p class="text-center text-muted mb-4" style="font-size: 1rem; font-family:'Times New Roman', Times, serif">
+            <p class="text-center text-muted mb-4">
                 Chatterhub: Connecting every conversation, seamlessly and instantly.
             </p>
         </i>
@@ -38,42 +38,18 @@
         </div>
     </div>
 
-    <!-- Username Modal -->
-    <!-- <div class="modal fade" id="usernameModal" tabindex="-1" role="dialog" aria-labelledby="usernameModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="usernameModalLabel">Enter Your Username
-          </h5>
-        </div>
-        <div class="modal-body">
-          <input type="text" id="usernameInput" class="form-control" placeholder="Your username">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button id="join" class="btn btn-primary" data-dismiss="modal">Join</button>
-        </div>
-      </div>
-    </div>
-  </div> -->
     <script>
         const username = "{{ username }}";
+        
+        function scrollToBottom() {
+            const chat = document.getElementById('chat');
+            chat.scrollToBottom = chat.scrollHeight;
+        }
 
-        document.getElementById('join').onclick = function () {
-            if (!username || username === "None") {
-                alert("Bạn chưa đăng nhập!");
-                window.location.href = "/";
-                return;
-            }
-            document.getElementById('username-form').style.display = 'none';
-            document.getElementById('message-input').style.display = 'flex';
-            // Cuộn xuống cuối khung chat
-            setTimeout(function () {
-                const chat = document.getElementById('chat');
-                chat.scrollTop = chat.scrollHeight;
-            }, 100);
-        };
+        // Khi load trang
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(scrollToBottom, 10);
+        });
 
         document.getElementById('send').onclick = function () {
             const username = "{{ username }}";
@@ -85,10 +61,8 @@
                 }));
                 document.getElementById('message').value = "";
                 // Cuộn xuống cuối khung chat
-                setTimeout(function () {
-                    const chat = document.getElementById('chat');
-                    chat.scrollTop = chat.scrollHeight;
-                }, 100);
+
+                setTimeout(scrollToBottom, 10);
             }
         };
 
