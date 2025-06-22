@@ -16,6 +16,7 @@ body {
   border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
+  width: 100%;
 }
 
 .text-center {
@@ -26,24 +27,163 @@ body {
   display: none;
 }
 
-li {
-  display: block;
+#chat.jumbotron {
+  /* Các thuộc tính về chiều cao và cuộn đã tốt */
+  height: 70vh;
+  min-height: 300px;
+  max-height: 80vh; /* Rất quan trọng để bật cuộn dọc */
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Đẩy nội dung xuống cuối, phù hợp với chat */
+
+  /* Thêm padding cho khung chat để nội dung không bị dính vào viền */
+  padding: 15px; /* Ví dụ, bạn có thể điều chỉnh */
+  background: #f8f9fa;
+  margin-bottom: 1rem;
+  width: 100%;
+  border-radius: 0.5rem; /* Bo tròn góc cho đẹp hơn */
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Thêm đổ bóng nhẹ */
+}
+
+#messages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column; /* Tin nhắn xếp dọc */
+  overflow-y: scroll;
+  overflow-x: hidden; /* Ẩn cuộn ngang */
+  
+  /* justify-content: flex-end;  */
+  gap: 0.5rem; 
+  width: 100%; 
+}
+
+/* Base style for each message item (li) */
+li.clearfix {
+  display: flex; /* Dùng flexbox cho mỗi dòng tin nhắn */
+  width: 100%;
+  /* background: none; */ /* Bỏ cái này nếu bạn muốn background cụ thể cho user/other message */
+  /* border: none; */
+  /* Loại bỏ justify-content: flex-start; ở đây và dùng cho .user-message/.other-message để kiểm soát vị trí */
 }
 
 .user-message {
   background-color: #007bff;
   color: #fff;
-  border-radius: 0.5em;
-  padding: 5px 10px;
-  margin: 5px 0;
-  float: right;
+  border-radius: 16px;
+  margin: 2px 0;
+  font-size: 1rem;
+  padding: 8px 14px;
+  max-width: 80%;
+  margin-left: auto;
+  text-align: right;
+  align-self: flex-end;
 }
 
 .other-message {
-  background-color: #ff9100;
+  background-color: #eb8500;
   color: #fff;
-  border-radius: 0.5em;
-  padding: 5px 10px;
-  margin: 5px 0;
-  float: left;
+  border-radius: 16px;
+  margin: 2px 0;
+  font-size: 1rem;
+  padding: 8px 14px;
+  max-width: 80%;
+  margin-right: auto;
+  text-align: left;
+  align-self: flex-start;
+}
+#message-input {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 10;
+  padding-bottom: 8px;
+}
+
+@media (max-width: 1024px) {
+  body {
+    background: linear-gradient(135deg, #6600ec 0%, #0a0027 100%);
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 100vh;
+    width: 100vw;
+    padding: 0;
+    margin: 0;
+  }
+  .container {
+    max-width: 96vw;
+    margin: 2vw auto 0 auto;
+    border-radius: 12px;
+    box-shadow: 0px 2px 16px rgba(0, 0, 0, 0.15);
+    padding: 10px 0 0 0;
+    min-height: 96vh;
+    background: #fff;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    background: linear-gradient(135deg, #6600ec 0%, #0a0027 100%);
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    width: 100vw;
+  }
+  .container {
+    max-width: 98vw;
+    margin: 2vw auto 0 auto;
+    border-radius: 10px;
+    box-shadow: 0px 2px 16px rgba(0, 0, 0, 0.13);
+    padding: 0;
+    min-height: 97vh;
+    background: #fff;
+  }
+  #chat.jumbotron {
+    height: 55vh;
+    min-height: 180px;
+    max-height: 60vh;
+    padding: 8px;
+  }
+  .user-message,
+  .other-message {
+    font-size: 0.95rem;
+    max-width: 95%;
+    padding: 7px 10px;
+  }
+  #message {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    background: linear-gradient(135deg, #6600ec 0%, #0a0027 100%);
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    width: 100vw;
+  }
+  .container {
+    max-width: 99vw;
+    margin: 1vw auto 0 auto;
+    border-radius: 8px;
+    box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.12);
+    padding: 0;
+    min-height: 98vh;
+    background: #fff;
+  }
+  #chat.jumbotron {
+    height: 45vh;
+    min-height: 100px;
+    max-height: 50vh;
+    padding: 4px;
+  }
+  .user-message,
+  .other-message {
+    font-size: 0.9rem;
+    max-width: 98%;
+    padding: 6px 7px;
+  }
 }

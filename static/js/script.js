@@ -10,11 +10,14 @@ function initializeWebSocket() {
 
   socket.onmessage = function (event) {
     const data = JSON.parse(event.data);
-    const msgClass = data.isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
-    const sender = data.isMe ? 'You' : data.username;
+    // So sánh username nhận được với username hiện tại
+    const isMe = data.username === username;
+    console.log(username);
+
+    const msgClass = isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
+    const sender = isMe ? 'You' : data.username;
     const message = data.data;
 
-    // Nếu là thông báo hệ thống (ví dụ Welcome back!)
     if (sender === 'You' && (message === 'Welcome back!' || message === 'Have joined!!')) {
       const sysMsg = $('<li>').addClass('clearfix text-center text-info').text(message);
       $('#messages').append(sysMsg);
@@ -30,7 +33,7 @@ function initializeWebSocket() {
   socket.onmessage = function (event) {
     const data = JSON.parse(event.data);
     console.log('Received message:', data);
-    
+
     const msgClass = data.isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
     const sender = data.isMe ? 'You' : data.username;
     const message = data.data;

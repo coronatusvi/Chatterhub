@@ -9,7 +9,7 @@
 
 <body>
   <div class="container">
-    <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-2" style=" padding: 0 20px;">
       <form method="get" action="/join" style="display:inline;">
         <button type="submit" class="btn btn-secondary">Back</button>
       </form>
@@ -60,17 +60,51 @@
   </div> -->
   <script>
     const username = "{{ username }}";
-    // dùng username này khi gửi/nhận tin nhắn
+
+    document.getElementById('join').onclick = function () {
+      if (!username || username === "None") {
+        alert("Bạn chưa đăng nhập!");
+        window.location.href = "/";
+        return;
+      }
+      document.getElementById('username-form').style.display = 'none';
+      document.getElementById('message-input').style.display = 'flex';
+      // Cuộn xuống cuối khung chat
+      setTimeout(function () {
+        const chat = document.getElementById('chat');
+        chat.scrollTop = chat.scrollHeight;
+      }, 100);
+    };
+
     document.getElementById('send').onclick = function () {
+      const username = "{{ username }}";
       const message = document.getElementById('message').value;
-      if (message.trim() !== "") {
+      if (message.trim() !== "" && username && username !== "Incognito") {
         socket.send(JSON.stringify({
-          username: username, // lấy từ biến global đã truyền vào
+          username: username,
           message: message
         }));
         document.getElementById('message').value = "";
+        // Cuộn xuống cuối khung chat
+        setTimeout(function () {
+          const chat = document.getElementById('chat');
+          chat.scrollTop = chat.scrollHeight;
+        }, 100);
       }
     };
+
+
+    document.getElementById('message').addEventListener('keydown', function (event) {
+      if (event.key === "Enter") {
+        if (event.ctrlKey || event.metaKey) {
+          // Cho phép xuống dòng khi Ctrl+Enter (hoặc Cmd+Enter trên Mac)
+          return;
+        } else {
+          event.preventDefault(); // Không xuống dòng
+          document.getElementById('send').click();
+        }
+      }
+    });
   </script>
   {% if error and error.strip() %}
   <script>

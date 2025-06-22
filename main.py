@@ -137,8 +137,17 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             decoded = json.loads(data)
+            username = decoded.get("username")
+            message = decoded.get("message")
+            # Kiểm tra username hợp lệ
+            if not username:
+                await connection_manager.send_message(
+                    websocket,
+                    json.dumps({"isMe": True, "data": "Username is missing!", "username": "system"})
+                )
+                continue
             # Lưu tin nhắn vào DB
-            msg = Message(username=decoded["username"], content=decoded["message"])
+            msg = Message(username=username, content=message)
             db.add(msg)
             db.commit()
             await connection_manager.broadcast(websocket, data)
@@ -146,7 +155,7 @@ async def websocket_endpoint(websocket: WebSocket):
         id = connection_manager.disconnect(websocket)
         db.close()
         return RedirectResponse("/")
-
+    
 @app.post("/logout")
 def logout():
     response = RedirectResponse(url="/", status_code=302)
