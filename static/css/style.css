@@ -34,11 +34,6 @@ p,
 }
 
 #chat.jumbotron {
-  /* Các thuộc tính về chiều cao và cuộn đã tốt */
-  height: 70vh;
-  min-height: 300px;
-  max-height: 80vh; /* Rất quan trọng để bật cuộn dọc */
-
   display: flex;
   flex-direction: column;
   justify-content: flex-end; /* Đẩy nội dung xuống cuối, phù hợp với chat */
@@ -148,15 +143,15 @@ li.clearfix {
   white-space: pre-line;
 }
 
-#message-input {
+/* #message-input {
   position: sticky;
   bottom: 0;
   background: #fff;
   z-index: 10;
   padding-bottom: 8px;
-}
+} */
 
-/* #message-input {
+#message-input {
   position: fixed;
   left: 0;
   right: 0;
@@ -173,8 +168,8 @@ li.clearfix {
   margin: 0 auto;
 }
 .container {
-  padding-bottom: 70px; 
-} */
+  padding-bottom: 70px;
+}
 
 @media (max-width: 1024px) {
   body {

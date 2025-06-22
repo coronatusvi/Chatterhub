@@ -13,12 +13,12 @@ function initializeWebSocket() {
     const data = JSON.parse(event.data);
     // So sánh username nhận được với username hiện tại
     const isMe = data.username === username;
-    const sender = isMe ? 'You' : data.username;
+    const sender = isMe ? '' : data.username + ':\n';
     const message = data.message || data.data; // phòng trường hợp server gửi khác key
 
     const msgClass = isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
     const messageElement = $('<li>').addClass('clearfix');
-    messageElement.append($('<div>').addClass(msgClass).text(sender + ': ' + message));
+    messageElement.append($('<div>').addClass(msgClass).text(sender + message));
     $('#messages').append(messageElement);
     const chat = document.getElementById('chat');
     chat.scrollTop = chat.scrollHeight;
