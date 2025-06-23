@@ -1,7 +1,8 @@
 from datetime import datetime
 
 import bcrypt
-from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends
+from authentication.auth import get_current_user
+from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends, Body, Cookie
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from dataclasses import dataclass
@@ -10,9 +11,12 @@ import uuid
 import json
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from db.database import SessionLocal
+from db.database import SessionLocal, get_db
 from db.models import Message, User
 from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse
+from fastapi.exception_handlers import RequestValidationError
+from fastapi.exceptions import HTTPException
 
 templates = Jinja2Templates(directory="templates")
 
@@ -20,15 +24,6 @@ templates = Jinja2Templates(directory="templates")
 class ConnectionManager:
   def __init__(self) -> None:
     self.active_connections: dict = {}
-
-  def get_db():
-    print("Opening DB connection")
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        print("Closing DB connection")
-        db.close()
 
   async def connect(self, websocket: WebSocket):
     await websocket.accept()
@@ -96,15 +91,6 @@ connection_manager = ConnectionManager()
 # def get_room(request: Request):
 #   return templates.TemplateResponse("index.html", {"request": request})
 
-def get_db():
-    print("Opening DB connection")
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        print("Closing DB connection")
-        db.close()
-
 @app.get("/", response_class=HTMLResponse)
 def login_form(request: Request):
     response = templates.TemplateResponse("login.html", {"request": request})
@@ -148,8 +134,13 @@ def login_or_register(
     else:  # action == "login"
         user = db.query(User).filter(User.username == username).first()
         if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            # Sinh token mới
+            new_token = uuid.uuid4().hex
+            user.token = new_token
+            db.commit()
             response = RedirectResponse(url="/join", status_code=302)
             response.set_cookie(key="username", value=user.username)
+            response.set_cookie(key="token", value=new_token)
             return response
         else:
             return templates.TemplateResponse("login.html", {
@@ -158,8 +149,15 @@ def login_or_register(
                 "mode": "login"
             })
 
+
 @app.websocket("/message")
 async def websocket_endpoint(websocket: WebSocket):
+    token = websocket.cookies.get("token")
+    db = SessionLocal()
+    user = db.query(User).filter(User.token == token).first()
+    if not user:
+        await websocket.close()
+        return
     await connection_manager.connect(websocket)
     db = SessionLocal()
     # Gửi lại các tin nhắn cũ cho client mới
@@ -196,29 +194,64 @@ async def websocket_endpoint(websocket: WebSocket):
 def logout():
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie("username")
+    response.delete_cookie("token") 
     return response
 
 @app.get("/join", response_class=HTMLResponse)
-def join_form(request: Request):
-    username = request.cookies.get("username")
+def join_form(request: Request, user: User = Depends(get_current_user)):
+    username = user.username
     response = templates.TemplateResponse("index.html", {"request": request, "username": username})
-    # response.headers["Cache-Control"] = "no-store"
     return response
 
 @app.post("/join")
 async def join(request: Request):
     form = await request.form()
     username = form["username"]
+
+    db = SessionLocal()
+    user = db.query(User).filter(User.username == username).first()
+    db.close()
     response = RedirectResponse("/chat", status_code=302)
     response.set_cookie("username", username)
+    if user and user.token:
+        response.set_cookie("token", user.token)
     return response
 
 @app.get("/chat", response_class=HTMLResponse)
-def chat_room(request: Request):
-    username = request.cookies.get("username")
-    if not username:
-        return RedirectResponse("/join")
-    response = templates.TemplateResponse("chat.html", {"request": request, "username": username})
-    # response.headers["Cache-Control"] = "no-store"
+def chat_room(request: Request, user: User = Depends(get_current_user)):
+    username = user.username
+    response = templates.TemplateResponse("index.html", {"request": request, "username": username})
     return response
+        
+@app.post("/api/message")
+def create_message(
+    data: dict = Body(...),
+    token: str = Cookie(None),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.token == token).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    content = data.get("message")
+    if not content:
+        return {"error": "No message content"}
+    msg = Message(username=user.username, content=content)
+    db.add(msg)
+    db.commit()
+    return {"success": True, "message": "Message sent"}
 
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == 401:
+        # Trả về trang login với thông báo hết phiên
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+                "error": "Phiên đăng nhập đã hết, vui lòng đăng nhập lại!",
+                "mode": "login"
+            },
+            status_code=401
+        )
+    # Các lỗi khác giữ nguyên
+    return await fastapi.exception_handlers.http_exception_handler(request, exc)

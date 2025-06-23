@@ -78,7 +78,6 @@
 
     document.getElementById('send').onclick = function () {
       const username = "{{ username }}";
-      console.log("Username:", username);
 
       if (!username || username === "None") {
         alert("Bạn chưa đăng nhập!");
@@ -125,6 +124,15 @@
     document.addEventListener('DOMContentLoaded', function () {
       $('#errorModal').modal('show');
     });
+    socket.onerror = function (event) {
+      console.error('WebSocket error. Please rejoin the chat.');
+      showJoinModal(); // Hàm này nên hiện popup hết phiên
+    };
+    socket.onclose = function (event) {
+      if (event.code !== 1000) {
+        showJoinModal(); // Hết phiên hoặc lỗi, hiện popup
+      }
+    };
   </script>
   {% endif %}
 
