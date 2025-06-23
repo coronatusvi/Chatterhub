@@ -46,7 +46,9 @@ If your computer is on python version != 3.10, you can download 3.10 in parallel
 or building with venv
 
 ```bash
-    python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+    python3 -m venv venv 
+    source venv/bin/activate  
+    pip install -r requirements.txt
 ```
 
 You can install Database
