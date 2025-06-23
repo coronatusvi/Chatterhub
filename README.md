@@ -56,6 +56,7 @@ You can install Database
 ```bash
     sudo apt-get update
     sudo apt-get install -y libsqlite3-dev
+    python3 db/create_db.py
 ```
 
 SQLite is chosen for its lightweight, serverless nature, making deployment and maintenance effortless for our project. While perceived as small-scale, it efficiently handles large datasets into terabytes, with SQL syntax mirroring that of larger databases.

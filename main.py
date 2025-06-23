@@ -2,7 +2,7 @@ from datetime import datetime
 
 import bcrypt
 from authentication.auth import get_current_user
-from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends
+from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends, Body, Cookie
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from dataclasses import dataclass
@@ -149,6 +149,7 @@ def login_or_register(
                 "mode": "login"
             })
 
+
 @app.websocket("/message")
 async def websocket_endpoint(websocket: WebSocket):
     token = websocket.cookies.get("token")
@@ -221,6 +222,23 @@ def chat_room(request: Request, user: User = Depends(get_current_user)):
     username = user.username
     response = templates.TemplateResponse("index.html", {"request": request, "username": username})
     return response
+        
+@app.post("/api/message")
+def create_message(
+    data: dict = Body(...),
+    token: str = Cookie(None),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.token == token).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    content = data.get("message")
+    if not content:
+        return {"error": "No message content"}
+    msg = Message(username=user.username, content=content)
+    db.add(msg)
+    db.commit()
+    return {"success": True, "message": "Message sent"}
 
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request: Request, exc: HTTPException):

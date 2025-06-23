@@ -20,11 +20,11 @@ function initializeWebSocket() {
     const msgClass = isMe ? 'user-message float-right text-right' : 'other-message float-left text-left';
     const messageElement = $('<li>').addClass('clearfix');
     messageElement.append($('<div>').addClass(msgClass).text(sender + message));
+    // document.getElementById('messages').appendChild(messageElement);
     $('#messages').append(messageElement);
     setTimeout(() => {
       scrollMessagesToBottom();
     }, 50);
-    document.getElementById('messages').appendChild(messageElement);
   };
 
   socket.onerror = function (event) {
