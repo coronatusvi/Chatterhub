@@ -1,22 +1,16 @@
 from datetime import datetime
 
-import bcrypt
-from authentication.auth import get_current_user
-from fastapi import FastAPI, WebSocket, Request, WebSocketDisconnect, Form, Depends, Body, Cookie
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, WebSocket
 from fastapi.templating import Jinja2Templates
 from dataclasses import dataclass
 from typing import Dict
 import uuid
 import json
-from fastapi.responses import RedirectResponse
+from db.database import SessionLocal
 from fastapi.staticfiles import StaticFiles
-from db.database import SessionLocal, get_db
 from db.models import Message, User
-from sqlalchemy.orm import Session
-from fastapi.responses import HTMLResponse
-from fastapi.exception_handlers import RequestValidationError
-from fastapi.exceptions import HTTPException
+import controllers.auth_controller as auth_router
+import controllers.chat_controller as chat_router
 
 templates = Jinja2Templates(directory="templates")
 
@@ -87,171 +81,5 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 connection_manager = ConnectionManager()
 
-# @app.get("/", response_class=HTMLResponse)
-# def get_room(request: Request):
-#   return templates.TemplateResponse("index.html", {"request": request})
-
-@app.get("/", response_class=HTMLResponse)
-def login_form(request: Request):
-    response = templates.TemplateResponse("login.html", {"request": request})
-    response.delete_cookie("username")
-    return response
-
-@app.post("/", response_class=HTMLResponse)
-def login_or_register(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-    email: str = Form(None),
-    action: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    if action == "register":
-        # Kiểm tra username/email đã tồn tại chưa
-        if db.query(User).filter((User.username == username) | (User.email == email)).first():
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": "Username hoặc email đã tồn tại!",
-                "mode": "register"
-            })
-        # Kiểm tra độ dài mật khẩu
-        if len(password) < 8:
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": "Mật khẩu phải có ít nhất 8 ký tự!",
-                "mode": "register"
-            })
-        # Hash password trước khi lưu
-        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        user = User(username=username, password=hashed_pw, email=email, token="")
-        db.add(user)
-        db.commit()
-        return templates.TemplateResponse("login.html", {
-            "request": request,
-            "error": "Đăng ký thành công, hãy đăng nhập!",
-            "mode": "login"
-        })
-    else:  # action == "login"
-        user = db.query(User).filter(User.username == username).first()
-        if user and bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            # Sinh token mới
-            new_token = uuid.uuid4().hex
-            user.token = new_token
-            db.commit()
-            response = RedirectResponse(url="/join", status_code=302)
-            response.set_cookie(key="username", value=user.username)
-            response.set_cookie(key="token", value=new_token)
-            return response
-        else:
-            return templates.TemplateResponse("login.html", {
-                "request": request,
-                "error": "Sai tài khoản hoặc mật khẩu",
-                "mode": "login"
-            })
-
-
-@app.websocket("/message")
-async def websocket_endpoint(websocket: WebSocket):
-    token = websocket.cookies.get("token")
-    db = SessionLocal()
-    user = db.query(User).filter(User.token == token).first()
-    if not user:
-        await websocket.close()
-        return
-    await connection_manager.connect(websocket)
-    db = SessionLocal()
-    # Gửi lại các tin nhắn cũ cho client mới
-    old_messages = db.query(Message).order_by(Message.created_at).all()
-    for msg in old_messages:
-        await connection_manager.send_message(
-            websocket,
-            json.dumps({"isMe": False, "data": msg.content, "username": msg.username})
-        )
-    try:
-        while True:
-            data = await websocket.receive_text()
-            decoded = json.loads(data)
-            username = decoded.get("username")
-            message = decoded.get("message")
-            # Kiểm tra username hợp lệ
-            if not username:
-                await connection_manager.send_message(
-                    websocket,
-                    json.dumps({"isMe": True, "data": "Username is missing!", "username": "system"})
-                )
-                continue
-            # Lưu tin nhắn vào DB
-            msg = Message(username=username, content=message)
-            db.add(msg)
-            db.commit()
-            await connection_manager.broadcast(websocket, data)
-    except WebSocketDisconnect:
-        id = connection_manager.disconnect(websocket)
-        db.close()
-        return RedirectResponse("/")
-    
-@app.get("/logout")
-def logout():
-    response = RedirectResponse(url="/", status_code=302)
-    response.delete_cookie("username")
-    response.delete_cookie("token") 
-    return response
-
-@app.get("/join", response_class=HTMLResponse)
-def join_form(request: Request, user: User = Depends(get_current_user)):
-    username = user.username
-    response = templates.TemplateResponse("index.html", {"request": request, "username": username})
-    return response
-
-@app.post("/join")
-async def join(request: Request):
-    form = await request.form()
-    username = form["username"]
-
-    db = SessionLocal()
-    user = db.query(User).filter(User.username == username).first()
-    db.close()
-    response = RedirectResponse("/chat", status_code=302)
-    response.set_cookie("username", username)
-    if user and user.token:
-        response.set_cookie("token", user.token)
-    return response
-
-@app.get("/chat", response_class=HTMLResponse)
-def chat_room(request: Request, user: User = Depends(get_current_user)):
-    username = user.username
-    response = templates.TemplateResponse("index.html", {"request": request, "username": username})
-    return response
-        
-@app.post("/api/message")
-def create_message(
-    data: dict = Body(...),
-    token: str = Cookie(None),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.token == token).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    content = data.get("message")
-    if not content:
-        return {"error": "No message content"}
-    msg = Message(username=user.username, content=content)
-    db.add(msg)
-    db.commit()
-    return {"success": True, "message": "Message sent"}
-
-@app.exception_handler(HTTPException)
-async def custom_http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == 401:
-        # Trả về trang login với thông báo hết phiên
-        return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
-                "error": "Phiên đăng nhập đã hết, vui lòng đăng nhập lại!",
-                "mode": "login"
-            },
-            status_code=401
-        )
-    # Các lỗi khác giữ nguyên
-    return await fastapi.exception_handlers.http_exception_handler(request, exc)
+app.include_router(auth_router)
+app.include_router(chat_router)
