@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, Depends, Cookie
+from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from db.models import User
 from db.database import get_db
@@ -7,19 +7,18 @@ import bcrypt
 import uuid
 from fastapi.templating import Jinja2Templates
 from fastapi.exception_handlers import RequestValidationError
-from fastapi.exceptions import HTTPException
 
 
-templates = Jinja2Templates(directory="templates")
 router = APIRouter()
+templates = Jinja2Templates(directory="templates")
 
-@app.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse)
 def login_form(request: Request):
     response = templates.TemplateResponse("login.html", {"request": request})
     response.delete_cookie("username")
     return response
 
-@app.post("/", response_class=HTMLResponse)
+@router.post("/", response_class=HTMLResponse)
 def login_or_register(
     request: Request,
     username: str = Form(...),
@@ -72,25 +71,10 @@ def login_or_register(
             })
 
 
-@app.get("/logout")
+@router.get("/logout")
 def logout():
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie("username")
     response.delete_cookie("token") 
     return response
 
-@app.exception_handler(HTTPException)
-async def custom_http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == 401:
-        # Trả về trang login với thông báo hết phiên
-        return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
-                "error": "Phiên đăng nhập đã hết, vui lòng đăng nhập lại!",
-                "mode": "login"
-            },
-            status_code=401
-        )
-    # Các lỗi khác giữ nguyên
-    return await fastapi.exception_handlers.http_exception_handler(request, exc)
